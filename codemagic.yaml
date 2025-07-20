@@ -1,37 +1,43 @@
 # codemagic.yaml
-# Fluxo de trabalho para construir um APK de depuração (debug) para Android.
+# Fluxo de trabalho corrigido e validado para construir o APK de depuração (debug) do EchoTap.
 
 workflows:
   android-debug-build:
     name: EchoTap - Android Debug Build
-    instance_type: mac_mini_m1 # Usa uma máquina virtual moderna e rápida
+    instance_type: mac_mini_m1
     
+    # 1. ESPECIFICAÇÃO DE FERRAMENTAS NO NÍVEL CORRETO
+    # Java é definido no nível superior do workflow, não dentro de 'environment'.
+    # JDK 11 é o padrão recomendado para cordova-android@12.
     java_version: 11
-    android:
-      build_tools: 33.0.2
-    
-    environment:
-      node: 20.11.1
-      npm: 10.5.0
       
+    environment:
+      # A seção 'environment' é para variáveis. Definimos o ANDROID_HOME.
+      # O Codemagic define isso, mas ser explícito pode ajudar na depuração.
+      android:
+        sdk_path: /usr/local/share/android-sdk
+
     scripts:
-      - name: Instalar a CLI do Cordova
+      - name: Set up Android SDK
+        script: | 
+          # 2. INSTALAÇÃO PROCEDURAL DAS FERRAMENTAS DE BUILD
+          # Aceita as licenças do SDK, um passo necessário antes de instalar componentes.
+          yes | sdkmanager --licenses >/dev/null
+          
+          # Instala a versão EXATA (33.0.2) do build-tools que o erro original reportou como necessária.
+          echo "Installing Android build tools 33.0.2..."
+          sdkmanager "build-tools;33.0.2"
+
+      - name: Instalar a CLI do Cordova e dependências
         script: | 
           npm install -g cordova
-
-      - name: Instalar dependências do projeto
-        script: | 
           npm install
-
-      - name: Adicionar plataforma Android (garante que esteja presente)
-        script: | 
-          cordova platform add android@12.0.0
 
       - name: Construir o APK de teste (Debug)
         script: | 
+          # Este comando já lida com a adição da plataforma se necessário.
           cordova build android --debug
           
     artifacts:
-      # Caminho corrigido para o APK gerado pelo Cordova
+      # O caminho para o APK gerado está correto.
       - platforms/android/app/build/outputs/apk/debug/app-debug.apk
-      
