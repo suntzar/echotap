@@ -1,6 +1,6 @@
 # codemagic.yaml
-# Versão FINAL E CORRIGIDA do fluxo de trabalho para construir o APK de depuração do EchoTap.
-# Este arquivo respeita o esquema de validação do Codemagic e resolve o erro de build original.
+# Versão FINAL E CORRIGIDA do fluxo de trabalho.
+# Resolve os erros "command not found" inicializando as ferramentas e usando caminhos absolutos.
 
 workflows:
   android-debug-build:
@@ -8,30 +8,37 @@ workflows:
     instance_type: mac_mini_m1
       
     environment:
-      # A maneira CORRETA de incluir as variáveis de ambiente do Android SDK.
       groups:
+        # Garante que a variável de ambiente $ANDROID_HOME esteja definida.
         - android-sdk
 
     scripts:
       - name: Configurar ambiente de build (Java e Android SDK)
         script: | 
-          # 1. Define a versão do Java usando jenv (ferramenta padrão no macOS da Codemagic)
-          # cordova-android@12 requer JDK 11.
-          echo "Setting Java version to 11..."
+          set -e # Faz o script falhar imediatamente se um comando falhar.
+          
+          echo "1. Inicializando jenv..."
+          # PASSO 1 DA CORREÇÃO: Inicializa o jenv para a sessão de shell atual.
+          export PATH="$HOME/.jenv/bin:$PATH"
+          eval "$(jenv init -)"
+          
+          echo "2. Definindo a versão do Java para 11..."
+          # Agora o comando 'jenv' será encontrado.
           jenv global 11.0
           
-          # 2. Aceita as licenças do SDK para permitir a instalação de novos pacotes.
-          echo "Accepting Android SDK licenses..."
-          yes | sdkmanager --licenses >/dev/null
+          echo "3. Aceitando as licenças do SDK do Android..."
+          # PASSO 2 DA CORREÇÃO: Usa o caminho absoluto para o sdkmanager.
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
           
-          # 3. Instala a versão EXATA do build-tools que o erro original exigia.
-          echo "Installing Android build-tools v33.0.2..."
-          sdkmanager "build-tools;33.0.2"
+          echo "4. Instalando as Ferramentas de Build v33.0.2..."
+          # PASSO 2 DA CORREÇÃO (continuação): Usa o caminho absoluto novamente.
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
 
       - name: Instalar dependências e CLI do Cordova
         script: | 
-          # Instala o Node.js na versão LTS mais recente (boa prática)
+          # Boa prática: definir e usar uma versão específica do Node.js
           nvm install 20
+          nvm use 20
           npm install -g cordova
           npm install
 
