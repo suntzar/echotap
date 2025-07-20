@@ -1,43 +1,44 @@
 # codemagic.yaml
-# Fluxo de trabalho corrigido e validado para construir o APK de depuração (debug) do EchoTap.
+# Versão FINAL E CORRIGIDA do fluxo de trabalho para construir o APK de depuração do EchoTap.
+# Este arquivo respeita o esquema de validação do Codemagic e resolve o erro de build original.
 
 workflows:
   android-debug-build:
     name: EchoTap - Android Debug Build
     instance_type: mac_mini_m1
-    
-    # 1. ESPECIFICAÇÃO DE FERRAMENTAS NO NÍVEL CORRETO
-    # Java é definido no nível superior do workflow, não dentro de 'environment'.
-    # JDK 11 é o padrão recomendado para cordova-android@12.
-    java_version: 11
       
     environment:
-      # A seção 'environment' é para variáveis. Definimos o ANDROID_HOME.
-      # O Codemagic define isso, mas ser explícito pode ajudar na depuração.
-      android:
-        sdk_path: /usr/local/share/android-sdk
+      # A maneira CORRETA de incluir as variáveis de ambiente do Android SDK.
+      groups:
+        - android-sdk
 
     scripts:
-      - name: Set up Android SDK
+      - name: Configurar ambiente de build (Java e Android SDK)
         script: | 
-          # 2. INSTALAÇÃO PROCEDURAL DAS FERRAMENTAS DE BUILD
-          # Aceita as licenças do SDK, um passo necessário antes de instalar componentes.
+          # 1. Define a versão do Java usando jenv (ferramenta padrão no macOS da Codemagic)
+          # cordova-android@12 requer JDK 11.
+          echo "Setting Java version to 11..."
+          jenv global 11.0
+          
+          # 2. Aceita as licenças do SDK para permitir a instalação de novos pacotes.
+          echo "Accepting Android SDK licenses..."
           yes | sdkmanager --licenses >/dev/null
           
-          # Instala a versão EXATA (33.0.2) do build-tools que o erro original reportou como necessária.
-          echo "Installing Android build tools 33.0.2..."
+          # 3. Instala a versão EXATA do build-tools que o erro original exigia.
+          echo "Installing Android build-tools v33.0.2..."
           sdkmanager "build-tools;33.0.2"
 
-      - name: Instalar a CLI do Cordova e dependências
+      - name: Instalar dependências e CLI do Cordova
         script: | 
+          # Instala o Node.js na versão LTS mais recente (boa prática)
+          nvm install 20
           npm install -g cordova
           npm install
 
       - name: Construir o APK de teste (Debug)
         script: | 
-          # Este comando já lida com a adição da plataforma se necessário.
           cordova build android --debug
           
     artifacts:
-      # O caminho para o APK gerado está correto.
+      # O caminho para o artefato está correto.
       - platforms/android/app/build/outputs/apk/debug/app-debug.apk
