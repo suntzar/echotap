@@ -1,7 +1,7 @@
 # codemagic.yaml
 # Versão FINAL E CORRIGIDA do fluxo de trabalho.
-# Resolve o erro de build-tools usando o caminho completo para o sdkmanager,
-# garantindo compatibilidade e validade do arquivo de configuração.
+# Adiciona o comando 'cordova platform add' para garantir que a estrutura
+# do projeto esteja completa antes da compilação.
 
 workflows:
   android-debug-build:
@@ -11,22 +11,22 @@ workflows:
     scripts:
       - name: Instalar Android build-tools v33.0.2
         script: | 
-          # FATO: $ANDROID_HOME é uma variável de ambiente padrão nos ambientes Codemagic.
-          # SOLUÇÃO: Usamos o caminho completo para o sdkmanager para evitar erros de "command not found".
-          
-          echo "Accepting Android SDK licenses..."
+          # Este passo está correto e deve ser mantido.
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
-          
-          echo "Installing Android build-tools v33.0.2..."
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
 
       - name: Instalar dependências e CLI do Cordova
         script: | 
-          # Define a versão do Node.js para consistência
           nvm install 20
           npm install -g cordova
           npm install
 
+      - name: Adicionar plataforma Android
+        script: | 
+          # ESTE É O PASSO CRUCIAL QUE ESTAVA FALTANDO.
+          # Ele cria a pasta 'platforms/android' e prepara o projeto para o build.
+          cordova platform add android@12.0.0
+          
       - name: Construir o APK de teste (Debug)
         script: | 
           cordova build android --debug
