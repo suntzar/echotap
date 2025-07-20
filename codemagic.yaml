@@ -7,6 +7,15 @@ workflows:
     instance_type: mac_mini_m1 # Usa uma máquina virtual moderna e rápida
     
     environment:
+      # Especifica a versão do Java (JDK 11 é o recomendado para cordova-android@12)
+      java_version: 11
+      
+      # Adiciona o grupo 'android' para configurar o SDK
+      android:
+        # PONTO CHAVE DA CORREÇÃO:
+        # Instala a versão exata (33.0.2) do Build Tools que o seu projeto precisa.
+        build_tools: 33.0.2
+        
       # Define as versões das ferramentas para um build consistente
       node: 20.11.1
       npm: 10.5.0
@@ -31,3 +40,4 @@ workflows:
     artifacts:
       # Caminho corrigido para o APK gerado pelo Cordova
       - platforms/android/app/build/outputs/apk/debug/app-debug.apk
+      

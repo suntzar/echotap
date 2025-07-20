@@ -2,11 +2,15 @@
 <html lang="pt-br">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+        <!-- A meta tag Content-Security-Policy é crucial para a segurança em apps Cordova -->
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover, user-scalable=no">
+        
         <title>EchoTap - Amplify Your Actions</title>
 
         <link rel="stylesheet" href="noxss/dist/noxss.css" />
-        <script src="noxss/dist/noxss.js"></script>
         <script defer src="https://unpkg.com/feather-icons"></script>
 
         <style>
@@ -81,7 +85,6 @@
                 pointer-events: none;
             }
 
-            /* Estilo para o link de edição de coordenadas */
             .coords-edit-link {
                 cursor: pointer;
                 text-decoration: underline;
@@ -187,7 +190,7 @@
                                         </p>
                                         <button class="noxss-btn noxss-btn--secondary js-set-position" data-trigger="volumeUp">
                                             <i data-feather="crosshair" class="noxss-icon"></i>
-                                            <span>Definir Posição</span>
+                                            <span>Captura Rápida</span>
                                         </button>
                                     </div>
                                 </div>
@@ -207,7 +210,7 @@
                                         </p>
                                         <button class="noxss-btn noxss-btn--secondary js-set-position" data-trigger="volumeDown">
                                             <i data-feather="crosshair" class="noxss-icon"></i>
-                                            <span>Definir Posição</span>
+                                            <span>Captura Rápida</span>
                                         </button>
                                     </div>
                                 </div>
@@ -231,7 +234,7 @@
                                         <div class="noxss-list-item__leading"><div class="noxss-list-item__icon">2</div></div>
                                         <div class="noxss-list-item__content">
                                             <div class="noxss-list-item__title">Configure seus Gatilhos</div>
-                                            <div class="noxss-list-item__subtitle">Na aba "Gatilhos", defina a posição com o botão "crosshair" ou clique nas coordenadas para inserir manualmente.</div>
+                                            <div class="noxss-list-item__subtitle">Na aba "Gatilhos", defina a posição com o botão "Captura Rápida" ou clique nas coordenadas para inserir manualmente.</div>
                                         </div>
                                     </li>
                                     <li class="noxss-list-item">
@@ -255,9 +258,6 @@
             </nav>
         </div>
 
-        <!-- ============================================= -->
-        <!-- MODAL PARA EDIÇÃO MANUAL DE COORDENADAS       -->
-        <!-- ============================================= -->
         <div class="noxss-modal" id="manual-coords-modal" data-noxss-modal>
             <div class="noxss-modal__dialog">
                 <div class="noxss-modal__header">
@@ -283,53 +283,129 @@
                 </div>
             </div>
         </div>
+
+        <!-- SCRIPT DO CORDOVA -->
+        <script src="cordova.js"></script>
         
+        <!-- SCRIPT DA APLICAÇÃO -->
         <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                let appState = {
+            // Objeto App que encapsula toda a lógica
+            const App = {
+                // Estado inicial da aplicação
+                state: {
                     permissionGranted: false,
                     serviceRunning: false,
                     triggers: {
                         volumeUp: { enabled: false, x: null, y: null },
                         volumeDown: { enabled: false, x: null, y: null },
                     },
-                };
+                },
 
-                // Elementos da UI
-                const mainContentArea = document.getElementById("main-content-area");
-                const permissionCard = document.getElementById("permission-card");
-                const permissionButton = document.getElementById("permission-button");
-                const mainToggle = document.getElementById("main-service-toggle");
-                const serviceStatusTitle = document.getElementById("service-status-title");
-                const serviceStatusSubtitle = document.getElementById("service-status-subtitle");
-                const triggersContainer = document.getElementById("triggers-container");
-                const triggersSubtitle = document.getElementById("triggers-subtitle");
-                const triggerToggles = document.querySelectorAll(".js-trigger-toggle");
-                const setPositionButtons = document.querySelectorAll(".js-set-position");
+                // Objeto para "mockar" o plugin nativo durante testes no navegador
+                EchoTapPluginMock: {
+                    checkPermission: (callback) => { setTimeout(() => callback(App.state.permissionGranted), 100); },
+                    requestPermission: () => {
+                        console.log("MOCK: Solicitando permissão...");
+                        // Simula o usuário concedendo a permissão após um tempo
+                        setTimeout(() => {
+                            Noxss.Toasts.show({ message: "Permissão concedida (Simulação)!", status: "success" });
+                            App.state.permissionGranted = true;
+                            App.saveState();
+                            App.updateUI();
+                        }, 1500);
+                    },
+                    startService: (config, success, error) => {
+                        console.log("MOCK: Iniciando serviço com config:", config);
+                        setTimeout(() => success("Serviço iniciado (Simulação)"), 100);
+                    },
+                    stopService: (success, error) => {
+                        console.log("MOCK: Parando serviço...");
+                        setTimeout(() => success("Serviço parado (Simulação)"), 100);
+                    },
+                    captureSingleTap: (callback) => {
+                         console.log("MOCK: Iniciando captura de toque...");
+                         const overlay = document.createElement("div");
+                         overlay.className = "tap-capture-overlay";
+                         overlay.innerHTML = `<i data-feather="crosshair" class="noxss-icon"></i><h3>Toque para Definir a Posição</h3><p>Toque em qualquer lugar para capturar as coordenadas.</p>`;
+                         document.body.appendChild(overlay);
+                         feather.replace();
+                         overlay.addEventListener("click", (e) => {
+                            const randX = Math.floor(Math.random() * 1080);
+                            const randY = Math.floor(Math.random() * 1920);
+                            callback({ x: randX, y: randY });
+                            document.body.removeChild(overlay);
+                         }, { once: true });
+                    }
+                },
 
-                // Elementos do Modal
-                const coordsEditLinks = document.querySelectorAll('.coords-edit-link');
-                const modalTriggerKeyInput = document.getElementById('modal-trigger-key');
-                const modalCoordXInput = document.getElementById('modal-coord-x');
-                const modalCoordYInput = document.getElementById('modal-coord-y');
-                const modalSaveButton = document.getElementById('modal-save-button');
+                // Inicializa o aplicativo
+                initialize() {
+                    document.addEventListener('deviceready', this.onDeviceReady.bind(this), false);
+                },
 
-                const saveState = () => localStorage.setItem("echoTapState", JSON.stringify(appState));
-                const loadState = () => {
+                // Evento disparado quando o Cordova está pronto
+                onDeviceReady() {
+                    console.log('Dispositivo pronto. Inicializando EchoTap.');
+
+                    // Define o plugin real ou o mock
+                    this.plugin = window.EchoTapPlugin || this.EchoTapPluginMock;
+                    
+                    this.bindEvents();
+                    this.loadState();
+                    
+                    // Verifica o estado inicial das permissões
+                    this.plugin.checkPermission(isGranted => {
+                        this.state.permissionGranted = isGranted;
+                        this.updateUI();
+                    });
+                },
+
+                // Associa eventos da UI às funções
+                bindEvents() {
+                    document.getElementById('permission-button').addEventListener('click', () => this.plugin.requestPermission());
+                    document.getElementById('main-service-toggle').addEventListener('change', this.onMainToggleChange.bind(this));
+                    document.querySelectorAll('.js-set-position').forEach(btn => btn.addEventListener('click', this.onSetPositionClick.bind(this)));
+                    document.querySelectorAll('.js-trigger-toggle').forEach(toggle => toggle.addEventListener('change', this.onTriggerToggleChange.bind(this)));
+                    document.querySelectorAll('.coords-edit-link').forEach(link => link.addEventListener('click', this.onCoordsEditClick.bind(this)));
+                    document.getElementById('modal-save-button').addEventListener('click', this.onModalSave.bind(this));
+                },
+
+                saveState() {
+                    localStorage.setItem("echoTapState", JSON.stringify(this.state));
+                },
+
+                loadState() {
                     const savedState = localStorage.getItem("echoTapState");
-                    if (savedState) appState = JSON.parse(savedState);
-                };
+                    if (savedState) {
+                        // Não sobrescreve o permissionGranted, que vem do plugin
+                        const parsed = JSON.parse(savedState);
+                        this.state.serviceRunning = parsed.serviceRunning;
+                        this.state.triggers = parsed.triggers;
+                    }
+                },
 
-                const updateUI = () => {
-                    if (!appState.permissionGranted) {
+                // Função central que atualiza toda a UI com base no estado
+                updateUI() {
+                    const { permissionGranted, serviceRunning, triggers } = this.state;
+                    
+                    // Elementos
+                    const mainContentArea = document.getElementById("main-content-area");
+                    const permissionCard = document.getElementById("permission-card");
+                    const mainToggle = document.getElementById("main-service-toggle");
+                    const serviceStatusTitle = document.getElementById("service-status-title");
+                    const serviceStatusSubtitle = document.getElementById("service-status-subtitle");
+                    const triggersContainer = document.getElementById("triggers-container");
+                    const triggersSubtitle = document.getElementById("triggers-subtitle");
+
+                    if (!permissionGranted) {
                         mainContentArea.classList.add("u-d-none");
                         permissionCard.classList.remove("u-d-none");
                     } else {
                         mainContentArea.classList.remove("u-d-none");
                         permissionCard.classList.add("u-d-none");
 
-                        mainToggle.checked = appState.serviceRunning;
-                        if (appState.serviceRunning) {
+                        mainToggle.checked = serviceRunning;
+                        if (serviceRunning) {
                             serviceStatusTitle.textContent = "Serviço Ativo";
                             serviceStatusSubtitle.textContent = "Os gatilhos estão em execução. Desative para editar.";
                             triggersContainer.classList.add("triggers-locked");
@@ -341,129 +417,92 @@
                             triggersSubtitle.textContent = "Defina as ações para os botões de volume.";
                         }
 
-                        Object.keys(appState.triggers).forEach(triggerKey => {
-                            const trigger = appState.triggers[triggerKey];
-                            document.getElementById(`overview-coords-${triggerKey}`).textContent = `Posição: ${trigger.x !== null ? `${trigger.x}, ${trigger.y}` : "N/A"}`;
-                            const statusDot = document.getElementById(`overview-status-dot-${triggerKey}`);
-                            const statusText = document.getElementById(`overview-status-text-${triggerKey}`);
-                            if (trigger.enabled && appState.serviceRunning) {
-                                statusDot.classList.add("active");
-                                statusText.textContent = "Ativo";
-                            } else {
-                                statusDot.classList.remove("active");
-                                statusText.textContent = "Inativo";
-                            }
-                        });
-
-                        triggerToggles.forEach(toggle => {
-                            const trigger = toggle.dataset.trigger;
-                            toggle.checked = appState.triggers[trigger].enabled;
-                        });
-
-                        coordsEditLinks.forEach(link => {
-                            const triggerKey = link.dataset.trigger;
-                            const { x, y } = appState.triggers[triggerKey];
-                            link.textContent = (x !== null && y !== null) ? `${x}, ${y}` : "N/A (Clique para definir)";
+                        Object.keys(triggers).forEach(key => {
+                            const trigger = triggers[key];
+                            document.getElementById(`overview-coords-${key}`).textContent = `Posição: ${trigger.x !== null ? `${trigger.x}, ${trigger.y}` : "N/A"}`;
+                            const statusDot = document.getElementById(`overview-status-dot-${key}`);
+                            const statusText = document.getElementById(`overview-status-text-${key}`);
+                            statusDot.classList.toggle('active', trigger.enabled && serviceRunning);
+                            statusText.textContent = trigger.enabled && serviceRunning ? "Ativo" : "Inativo";
+                            document.querySelector(`.js-trigger-toggle[data-trigger=${key}]`).checked = trigger.enabled;
+                            document.getElementById(`coords-${key}`).textContent = (trigger.x !== null && trigger.y !== null) ? `${trigger.x}, ${trigger.y}` : "N/A (Clique para definir)";
                         });
                     }
                     feather.replace();
-                };
+                },
 
-                const simulatePermissionGrant = () => {
-                    Noxss.Toasts.show({
-                        message: "Permissão de acessibilidade concedida!", status: "success", position: "top-center"
+                // Handlers de Eventos
+                onMainToggleChange(e) {
+                    const isEnabled = e.target.checked;
+                    const action = isEnabled ? this.plugin.startService : this.plugin.stopService;
+                    
+                    action(this.state.triggers, 
+                        (successMsg) => {
+                            this.state.serviceRunning = isEnabled;
+                            if (!isEnabled) {
+                                this.state.triggers.volumeUp.enabled = false;
+                                this.state.triggers.volumeDown.enabled = false;
+                            }
+                            this.saveState();
+                            this.updateUI();
+                            Noxss.Toasts.show({ message: successMsg, status: 'info' });
+                        },
+                        (errorMsg) => {
+                            Noxss.Toasts.show({ message: errorMsg, status: 'danger' });
+                            e.target.checked = !isEnabled; // Reverte o toggle em caso de erro
+                        }
+                    );
+                },
+                
+                onTriggerToggleChange(e) {
+                    const triggerKey = e.target.dataset.trigger;
+                    this.state.triggers[triggerKey].enabled = e.target.checked;
+                    this.saveState();
+                    this.updateUI();
+                },
+
+                onSetPositionClick(e) {
+                    const triggerKey = e.currentTarget.dataset.trigger;
+                    this.plugin.captureSingleTap((coords) => {
+                        this.state.triggers[triggerKey].x = coords.x;
+                        this.state.triggers[triggerKey].y = coords.y;
+                        this.state.triggers[triggerKey].enabled = true;
+                        Noxss.Toasts.show({ message: `Posição definida para ${triggerKey}: (${coords.x}, ${coords.y})`, status: "info" });
+                        this.saveState();
+                        this.updateUI();
                     });
-                    appState.permissionGranted = true;
-                    saveState();
-                    updateUI();
-                };
+                },
 
-                const simulatePositionSet = (triggerKey) => {
-                    const overlay = document.createElement("div");
-                    overlay.className = "tap-capture-overlay";
-                    overlay.innerHTML = `<i data-feather="crosshair" class="noxss-icon"></i><h3>Toque para Definir a Posição</h3><p>Toque em qualquer lugar para capturar as coordenadas.</p>`;
-                    document.body.appendChild(overlay);
-                    feather.replace();
+                onCoordsEditClick(e) {
+                    const triggerKey = e.currentTarget.dataset.trigger;
+                    const triggerData = this.state.triggers[triggerKey];
+                    document.getElementById('modal-trigger-key').value = triggerKey;
+                    document.getElementById('modal-coord-x').value = triggerData.x || '';
+                    document.getElementById('modal-coord-y').value = triggerData.y || '';
+                    document.getElementById('modal-title').textContent = `Editar ${triggerKey === 'volumeUp' ? 'Aumentar Volume' : 'Diminuir Volume'}`;
+                },
 
-                    overlay.addEventListener("click", () => {
-                        const randX = Math.floor(Math.random() * 1080);
-                        const randY = Math.floor(Math.random() * 1920);
-                        appState.triggers[triggerKey].x = randX;
-                        appState.triggers[triggerKey].y = randY;
-                        appState.triggers[triggerKey].enabled = true;
-                        Noxss.Toasts.show({
-                            message: `Posição definida para ${triggerKey}: (${randX}, ${randY})`, status: "info"
-                        });
-                        saveState();
-                        updateUI();
-                        document.body.removeChild(overlay);
-                    }, { once: true });
-                };
-
-                // --- Lógica do Modal ---
-                coordsEditLinks.forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        // A lib Noxss já abre o modal com o data-attribute
-                        const triggerKey = e.currentTarget.dataset.trigger;
-                        const triggerData = appState.triggers[triggerKey];
-
-                        // Preenche o modal com os dados atuais
-                        modalTriggerKeyInput.value = triggerKey;
-                        modalCoordXInput.value = triggerData.x || '';
-                        modalCoordYInput.value = triggerData.y || '';
-                        document.getElementById('modal-title').textContent = `Editar ${triggerKey === 'volumeUp' ? 'Aumentar Volume' : 'Diminuir Volume'}`;
-                    });
-                });
-
-                modalSaveButton.addEventListener('click', () => {
-                    const triggerKey = modalTriggerKeyInput.value;
-                    const newX = parseInt(modalCoordXInput.value, 10);
-                    const newY = parseInt(modalCoordYInput.value, 10);
+                onModalSave() {
+                    const triggerKey = document.getElementById('modal-trigger-key').value;
+                    const newX = parseInt(document.getElementById('modal-coord-x').value, 10);
+                    const newY = parseInt(document.getElementById('modal-coord-y').value, 10);
 
                     if (triggerKey && !isNaN(newX) && !isNaN(newY)) {
-                        appState.triggers[triggerKey].x = newX;
-                        appState.triggers[triggerKey].y = newY;
-                        appState.triggers[triggerKey].enabled = true; // Ativa o gatilho ao salvar
+                        this.state.triggers[triggerKey].x = newX;
+                        this.state.triggers[triggerKey].y = newY;
+                        this.state.triggers[triggerKey].enabled = true;
                         
-                        saveState();
-                        updateUI();
-                        Noxss.Modals.close(); // Fecha o modal
+                        this.saveState();
+                        this.updateUI();
+                        Noxss.Modals.close();
                         Noxss.Toasts.show({ message: `Posição para ${triggerKey} salva!`, status: 'success' });
                     } else {
                          Noxss.Toasts.show({ message: `Valores de X e Y inválidos.`, status: 'danger' });
                     }
-                });
+                }
+            };
 
-
-                // --- Event Listeners ---
-                permissionButton.addEventListener("click", simulatePermissionGrant);
-                mainToggle.addEventListener("change", () => {
-                    appState.serviceRunning = mainToggle.checked;
-                    if (!appState.serviceRunning) {
-                        appState.triggers.volumeUp.enabled = false;
-                        appState.triggers.volumeDown.enabled = false;
-                    }
-                    saveState();
-                    updateUI();
-                });
-                triggerToggles.forEach(toggle => {
-                    toggle.addEventListener("change", () => {
-                        const trigger = toggle.dataset.trigger;
-                        appState.triggers[trigger].enabled = toggle.checked;
-                        saveState();
-                        updateUI();
-                    });
-                });
-                setPositionButtons.forEach(button => {
-                    button.addEventListener("click", () => {
-                        const trigger = button.dataset.trigger;
-                        simulatePositionSet(trigger);
-                    });
-                });
-
-                loadState();
-                updateUI();
-            });
+            App.initialize();
         </script>
     </body>
 </html>
