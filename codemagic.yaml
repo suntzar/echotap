@@ -1,44 +1,26 @@
 # codemagic.yaml
-# Versão FINAL E CORRIGIDA do fluxo de trabalho.
-# Resolve os erros "command not found" inicializando as ferramentas e usando caminhos absolutos.
+# Versão FINAL, DEPURADA E SIMPLIFICADA para construir o APK do EchoTap.
+# Esta configuração utiliza as diretivas nativas do Codemagic para configurar o ambiente,
+# evitando erros de 'command not found'.
 
 workflows:
   android-debug-build:
     name: EchoTap - Android Debug Build
     instance_type: mac_mini_m1
-      
-    environment:
-      groups:
-        # Garante que a variável de ambiente $ANDROID_HOME esteja definida.
-        - android-sdk
+    
+    # A maneira CORRETA e DECLARATIVA de configurar o ambiente Android.
+    # Isto garante que o SDK e as ferramentas de build estejam prontos antes dos scripts rodarem.
+    android:
+      # PONTO CHAVE DA CORREÇÃO:
+      # Especifica a versão exata do Build Tools necessária.
+      # Codemagic irá instalar e configurar isso automaticamente.
+      build_tools: 33.0.2
 
     scripts:
-      - name: Configurar ambiente de build (Java e Android SDK)
-        script: | 
-          set -e # Faz o script falhar imediatamente se um comando falhar.
-          
-          echo "1. Inicializando jenv..."
-          # PASSO 1 DA CORREÇÃO: Inicializa o jenv para a sessão de shell atual.
-          export PATH="$HOME/.jenv/bin:$PATH"
-          eval "$(jenv init -)"
-          
-          echo "2. Definindo a versão do Java para 11..."
-          # Agora o comando 'jenv' será encontrado.
-          jenv global 11.0
-          
-          echo "3. Aceitando as licenças do SDK do Android..."
-          # PASSO 2 DA CORREÇÃO: Usa o caminho absoluto para o sdkmanager.
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
-          
-          echo "4. Instalando as Ferramentas de Build v33.0.2..."
-          # PASSO 2 DA CORREÇÃO (continuação): Usa o caminho absoluto novamente.
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
-
       - name: Instalar dependências e CLI do Cordova
         script: | 
-          # Boa prática: definir e usar uma versão específica do Node.js
+          # Boa prática: definir uma versão estável do Node.js
           nvm install 20
-          nvm use 20
           npm install -g cordova
           npm install
 
