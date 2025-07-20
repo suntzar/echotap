@@ -1,0 +1,33 @@
+# codemagic.yaml
+# Fluxo de trabalho para construir um APK de depuração (debug) para Android.
+
+workflows:
+  android-debug-build:
+    name: EchoTap - Android Debug Build
+    instance_type: mac_mini_m1 # Usa uma máquina virtual moderna e rápida
+    
+    environment:
+      # Define as versões das ferramentas para um build consistente
+      node: 20.11.1
+      npm: 10.5.0
+      
+    scripts:
+      - name: Instalar a CLI do Cordova
+        script: | 
+          npm install -g cordova
+
+      - name: Instalar dependências do projeto
+        script: | 
+          npm install
+
+      - name: Adicionar plataforma Android (garante que esteja presente)
+        script: | 
+          cordova platform add android@12.0.0
+
+      - name: Construir o APK de teste (Debug)
+        script: | 
+          cordova build android --debug
+          
+    artifacts:
+      # Caminho corrigido para o APK gerado pelo Cordova
+      - platforms/android/app/build/outputs/apk/debug/app-debug.apk

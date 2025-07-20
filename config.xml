@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.suntzar.echotap" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>EchoTap</name>
+    <description>Use os botões de volume como gatilhos de toque de tela em qualquer aplicativo.</description>
+    <author email="dev@cordova.apache.org" href="https://cordova.apache.org">
+        Suntzar
+    </author>
+    <content src="index.html" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+
+    <platform name="android">
+        <allow-intent href="market:*" />
+        
+        <!-- Preferências Essenciais para uma Aparência de App Nativo -->
+        <preference name="StatusBarOverlaysWebView" value="false" />
+        <preference name="StatusBarBackgroundColor" value="#111113" />
+        <preference name="StatusBarStyle" value="lightcontent" />
+        <preference name="NavigationBarColor" value="#111113" />
+        <preference name="DisallowOverscroll" value="true" />
+        <preference name="AndroidXEnabled" value="true" />
+        <preference name="AndroidLaunchMode" value="singleInstance" />
+    </platform>
+
+    <!-- Ícones e Splash Screens (serão adicionados no futuro) -->
+    <!-- 
+    <platform name="android">
+        <icon density="ldpi" src="res/icon/android/ldpi.png" />
+        ...
+        <splash density="land-ldpi" src="res/screen/android/splash-land-ldpi.png" />
+        ...
+    </platform>
+    -->
+</widget>

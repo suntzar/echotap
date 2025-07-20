@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+        <title>EchoTap - Amplify Your Actions</title>
+
+        <link rel="stylesheet" href="noxss/dist/noxss.css" />
+        <script src="noxss/dist/noxss.js"></script>
+        <script defer src="https://unpkg.com/feather-icons"></script>
+
+        <style>
+            :root {
+                --noxss-accent-primary: #818cf8;
+                --noxss-accent-primary-hover: #9fa8fb;
+                --noxss-accent-primary-rgb: 129, 140, 248;
+            }
+
+            .status-dot {
+                display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+                background-color: var(--noxss-text-secondary); margin-right: 0.5rem;
+                transition: background-color 0.3s ease;
+            }
+            .status-dot.active { background-color: var(--noxss-color-success); }
+            
+            .tap-capture-overlay {
+                position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(5px); z-index: 2000; display: flex;
+                align-items: center; justify-content: center; flex-direction: column;
+                color: white; cursor: crosshair; text-align: center;
+            }
+            .tap-capture-overlay h3 { color: white; border: none; }
+            .tap-capture-overlay .noxss-icon {
+                width: 48px; height: 48px; stroke-width: 1.5; margin-bottom: 1rem;
+                color: var(--noxss-accent-primary);
+            }
+
+            .power-button-container {
+                display: flex; flex-direction: column; align-items: center; gap: 1rem;
+            }
+            .power-button-wrapper input[type="checkbox"] {
+                position: absolute; opacity: 0; width: 0; height: 0;
+            }
+            .power-button {
+                --power-button-size: 80px; display: grid; place-items: center;
+                width: var(--power-button-size); height: var(--power-button-size);
+                border-radius: 35%; cursor: pointer; background-color: var(--noxss-bg-elements);
+                color: var(--noxss-text-secondary); border: 2px solid var(--noxss-border-color);
+                box-shadow: var(--noxss-shadow-md); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .power-button .noxss-icon {
+                width: calc(var(--power-button-size) * 0.5); height: calc(var(--power-button-size) * 0.5);
+                stroke-width: 2; transition: all 0.25s ease;
+            }
+            .power-button-wrapper input[type="checkbox"]:not(:checked) ~ .power-button:hover {
+                border-color: var(--noxss-text-secondary); transform: scale(1.05);
+            }
+            .power-button-wrapper input[type="checkbox"]:not(:checked) ~ .power-button:active {
+                transform: scale(0.95); box-shadow: var(--noxss-shadow-sm);
+            }
+            .power-button-wrapper input[type="checkbox"]:checked ~ .power-button {
+                background-color: var(--noxss-accent-primary); color: var(--noxss-text-on-accent);
+                border-color: var(--noxss-accent-primary-hover);
+                box-shadow: 0 0 20px rgba(var(--noxss-accent-primary-rgb), 0.4);
+            }
+            .power-button-wrapper input[type="checkbox"]:checked ~ .power-button .noxss-icon {
+                transform: scale(1.1);
+            }
+            .power-button-wrapper input[type="checkbox"]:checked ~ .power-button:hover {
+                background-color: var(--noxss-accent-primary-hover);
+            }
+            
+            .triggers-locked .noxss-card {
+                opacity: 0.65;
+                pointer-events: none;
+            }
+            .triggers-locked .noxss-card__header {
+                 pointer-events: auto;
+            }
+            .triggers-locked .noxss-card__header .noxss-check {
+                pointer-events: none;
+            }
+
+            /* Estilo para o link de edição de coordenadas */
+            .coords-edit-link {
+                cursor: pointer;
+                text-decoration: underline;
+                text-decoration-style: dotted;
+            }
+            .coords-edit-link:hover {
+                color: var(--noxss-accent-primary);
+            }
+        </style>
+    </head>
+    <body data-noxss-layout="app">
+        <div class="noxss-layout">
+            <nav class="noxss-navbar">
+                <a class="noxss-navbar__brand" href="#">
+                    <i data-feather="repeat" class="noxss-icon"></i>
+                    <span>EchoTap</span>
+                </a>
+            </nav>
+
+            <main class="noxss-layout__content">
+                <div class="noxss-tabs" data-default-tab="dashboard">
+                    <div class="noxss-tabs__header u-d-none md:u-d-flex">
+                        <button class="noxss-tabs__header-button" data-tab-id="dashboard"><i class="noxss-icon" data-feather="grid"></i> Painel</button>
+                        <button class="noxss-tabs__header-button" data-tab-id="triggers"><i class="noxss-icon" data-feather="edit"></i> Gatilhos</button>
+                        <button class="noxss-tabs__header-button" data-tab-id="help"><i class="noxss-icon" data-feather="help-circle"></i> Ajuda</button>
+                    </div>
+
+                    <div class="noxss-tabs__content-area">
+                        <!-- PAINEL 1: DASHBOARD -->
+                        <div class="noxss-tabs__panel" id="panel-dashboard">
+                            <div style="max-width: 600px; margin: 0 auto;">
+                                <div id="main-content-area" class="u-d-none">
+                                    <div class="u-d-flex u-flex-col u-align-center u-text-center u-mb-5">
+                                        <div class="power-button-container">
+                                            <label class="power-button-wrapper">
+                                                <input type="checkbox" id="main-service-toggle" aria-label="Ativar ou desativar o serviço EchoTap"/>
+                                                <div class="power-button" role="button" aria-hidden="true">
+                                                    <i data-feather="power" class="noxss-icon"></i>
+                                                </div>
+                                            </label>
+                                            <h3 id="service-status-title" class="h4">Serviço Inativo</h3>
+                                            <p id="service-status-subtitle" class="u-text-secondary">Configure seus gatilhos e ative para começar.</p>
+                                        </div>
+                                    </div>
+                                    <h3 class="h5 u-mb-3">Resumo dos Gatilhos</h3>
+                                    <ul id="trigger-overview-list" class="noxss-list noxss-list--inset">
+                                        <li class="noxss-list-item">
+                                            <div class="noxss-list-item__leading"><i data-feather="plus" class="noxss-icon"></i></div>
+                                            <div class="noxss-list-item__content">
+                                                <div class="noxss-list-item__title">Aumentar Volume</div>
+                                                <div class="noxss-list-item__subtitle" id="overview-coords-volumeUp">Posição: N/A</div>
+                                            </div>
+                                            <div class="noxss-list-item__trailing u-d-flex u-align-center">
+                                                <span class="status-dot" id="overview-status-dot-volumeUp"></span>
+                                                <span id="overview-status-text-volumeUp">Inativo</span>
+                                            </div>
+                                        </li>
+                                        <li class="noxss-list-item">
+                                            <div class="noxss-list-item__leading"><i data-feather="minus" class="noxss-icon"></i></div>
+                                            <div class="noxss-list-item__content">
+                                                <div class="noxss-list-item__title">Diminuir Volume</div>
+                                                <div class="noxss-list-item__subtitle" id="overview-coords-volumeDown">Posição: N/A</div>
+                                            </div>
+                                            <div class="noxss-list-item__trailing u-d-flex u-align-center">
+                                                <span class="status-dot" id="overview-status-dot-volumeDown"></span>
+                                                <span id="overview-status-text-volumeDown">Inativo</span>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div id="permission-card" class="noxss-card noxss-card--danger u-d-none">
+                                    <div class="noxss-card__body u-text-center">
+                                        <i data-feather="alert-triangle" class="noxss-icon u-mb-3" style="width: 48px; height: 48px;"></i>
+                                        <h3 class="noxss-card__title">Permissão Necessária</h3>
+                                        <p class="u-text-secondary u-mb-4">EchoTap precisa de acesso ao Serviço de Acessibilidade para funcionar. Esta permissão permite que o app simule toques na tela.</p>
+                                        <button id="permission-button" class="noxss-btn noxss-btn--danger">
+                                            <i data-feather="unlock" class="noxss-icon"></i>
+                                            <span>Ir para Configurações</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PAINEL 2: GATILHOS -->
+                        <div class="noxss-tabs__panel" id="panel-triggers">
+                            <h2 class="h3">Configurar Gatilhos</h2>
+                            <p class="u-text-secondary u-mb-4" id="triggers-subtitle">Defina as ações para os botões de volume.</p>
+                            <div id="triggers-container" class="noxss-card-deck">
+                                <div class="noxss-card">
+                                    <div class="noxss-card__header u-d-flex u-justify-between u-align-center">
+                                        <div class="noxss-card__title u-d-flex u-align-center u-gap-2">
+                                            <i data-feather="plus" class="noxss-icon"></i> Aumentar Volume
+                                        </div>
+                                        <label class="noxss-check">
+                                            <input type="checkbox" class="js-trigger-toggle" data-trigger="volumeUp" />
+                                            <span class="noxss-check-control"></span>
+                                        </label>
+                                    </div>
+                                    <div class="noxss-card__body">
+                                        <p class="u-text-secondary">Posição (X, Y): 
+                                            <code class="coords-edit-link" id="coords-volumeUp" data-trigger="volumeUp" data-noxss-modal-open="manual-coords-modal">N/A</code>
+                                        </p>
+                                        <button class="noxss-btn noxss-btn--secondary js-set-position" data-trigger="volumeUp">
+                                            <i data-feather="crosshair" class="noxss-icon"></i>
+                                            <span>Definir Posição</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="noxss-card">
+                                    <div class="noxss-card__header u-d-flex u-justify-between u-align-center">
+                                        <div class="noxss-card__title u-d-flex u-align-center u-gap-2">
+                                            <i data-feather="minus" class="noxss-icon"></i> Diminuir Volume
+                                        </div>
+                                        <label class="noxss-check">
+                                            <input type="checkbox" class="js-trigger-toggle" data-trigger="volumeDown"/>
+                                            <span class="noxss-check-control"></span>
+                                        </label>
+                                    </div>
+                                    <div class="noxss-card__body">
+                                        <p class="u-text-secondary">Posição (X, Y): 
+                                            <code class="coords-edit-link" id="coords-volumeDown" data-trigger="volumeDown" data-noxss-modal-open="manual-coords-modal">N/A</code>
+                                        </p>
+                                        <button class="noxss-btn noxss-btn--secondary js-set-position" data-trigger="volumeDown">
+                                            <i data-feather="crosshair" class="noxss-icon"></i>
+                                            <span>Definir Posição</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PAINEL 3: AJUDA -->
+                        <div class="noxss-tabs__panel" id="panel-help">
+                           <div style="max-width: 700px; margin: 0 auto;">
+                                <h2 class="h3">Como Usar o EchoTap</h2>
+                                <p class="u-text-secondary u-mb-4">Siga estes passos para configurar o aplicativo corretamente.</p>
+                                <ol class="noxss-list noxss-list--inset">
+                                    <li class="noxss-list-item">
+                                        <div class="noxss-list-item__leading"><div class="noxss-list-item__icon">1</div></div>
+                                        <div class="noxss-list-item__content">
+                                            <div class="noxss-list-item__title">Conceda a Permissão</div>
+                                            <div class="noxss-list-item__subtitle">No painel, clique em "Ir para Configurações", encontre <strong>EchoTap</strong> na lista e ative o serviço.</div>
+                                        </div>
+                                    </li>
+                                    <li class="noxss-list-item">
+                                        <div class="noxss-list-item__leading"><div class="noxss-list-item__icon">2</div></div>
+                                        <div class="noxss-list-item__content">
+                                            <div class="noxss-list-item__title">Configure seus Gatilhos</div>
+                                            <div class="noxss-list-item__subtitle">Na aba "Gatilhos", defina a posição com o botão "crosshair" ou clique nas coordenadas para inserir manualmente.</div>
+                                        </div>
+                                    </li>
+                                    <li class="noxss-list-item">
+                                        <div class="noxss-list-item__leading"><div class="noxss-list-item__icon">3</div></div>
+                                        <div class="noxss-list-item__content">
+                                            <div class="noxss-list-item__title">Ative o Serviço</div>
+                                            <div class="noxss-list-item__subtitle">Volte ao painel principal e clique no botão de power.</div>
+                                        </div>
+                                    </li>
+                                </ol>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <nav class="noxss-navbar noxss-navbar--bottom md:u-d-none">
+                <button class="noxss-tabs__nav-button" data-tab-id="dashboard" aria-label="Painel"><i class="noxss-icon" data-feather="grid"></i></button>
+                <button class="noxss-tabs__nav-button" data-tab-id="triggers" aria-label="Gatilhos"><i class="noxss-icon" data-feather="edit"></i></button>
+                <button class="noxss-tabs__nav-button" data-tab-id="help" aria-label="Ajuda"><i class="noxss-icon" data-feather="help-circle"></i></button>
+            </nav>
+        </div>
+
+        <!-- ============================================= -->
+        <!-- MODAL PARA EDIÇÃO MANUAL DE COORDENADAS       -->
+        <!-- ============================================= -->
+        <div class="noxss-modal" id="manual-coords-modal" data-noxss-modal>
+            <div class="noxss-modal__dialog">
+                <div class="noxss-modal__header">
+                    <h3 class="noxss-modal__title" id="modal-title">Editar Posição Manualmente</h3>
+                    <button class="noxss-btn noxss-btn--icon noxss-modal__close-btn" data-noxss-modal-close>
+                        <i data-feather="x" class="noxss-icon"></i>
+                    </button>
+                </div>
+                <div class="noxss-modal__body">
+                    <input type="hidden" id="modal-trigger-key" />
+                    <div class="noxss-form-group">
+                        <label for="modal-coord-x" class="noxss-label">Coordenada X</label>
+                        <input type="number" id="modal-coord-x" class="noxss-input" placeholder="Ex: 850" />
+                    </div>
+                     <div class="noxss-form-group">
+                        <label for="modal-coord-y" class="noxss-label">Coordenada Y</label>
+                        <input type="number" id="modal-coord-y" class="noxss-input" placeholder="Ex: 400" />
+                    </div>
+                </div>
+                <div class="noxss-modal__footer">
+                    <button class="noxss-btn noxss-btn--secondary" data-noxss-modal-close>Cancelar</button>
+                    <button id="modal-save-button" class="noxss-btn noxss-btn--primary">Salvar</button>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                let appState = {
+                    permissionGranted: false,
+                    serviceRunning: false,
+                    triggers: {
+                        volumeUp: { enabled: false, x: null, y: null },
+                        volumeDown: { enabled: false, x: null, y: null },
+                    },
+                };
+
+                // Elementos da UI
+                const mainContentArea = document.getElementById("main-content-area");
+                const permissionCard = document.getElementById("permission-card");
+                const permissionButton = document.getElementById("permission-button");
+                const mainToggle = document.getElementById("main-service-toggle");
+                const serviceStatusTitle = document.getElementById("service-status-title");
+                const serviceStatusSubtitle = document.getElementById("service-status-subtitle");
+                const triggersContainer = document.getElementById("triggers-container");
+                const triggersSubtitle = document.getElementById("triggers-subtitle");
+                const triggerToggles = document.querySelectorAll(".js-trigger-toggle");
+                const setPositionButtons = document.querySelectorAll(".js-set-position");
+
+                // Elementos do Modal
+                const coordsEditLinks = document.querySelectorAll('.coords-edit-link');
+                const modalTriggerKeyInput = document.getElementById('modal-trigger-key');
+                const modalCoordXInput = document.getElementById('modal-coord-x');
+                const modalCoordYInput = document.getElementById('modal-coord-y');
+                const modalSaveButton = document.getElementById('modal-save-button');
+
+                const saveState = () => localStorage.setItem("echoTapState", JSON.stringify(appState));
+                const loadState = () => {
+                    const savedState = localStorage.getItem("echoTapState");
+                    if (savedState) appState = JSON.parse(savedState);
+                };
+
+                const updateUI = () => {
+                    if (!appState.permissionGranted) {
+                        mainContentArea.classList.add("u-d-none");
+                        permissionCard.classList.remove("u-d-none");
+                    } else {
+                        mainContentArea.classList.remove("u-d-none");
+                        permissionCard.classList.add("u-d-none");
+
+                        mainToggle.checked = appState.serviceRunning;
+                        if (appState.serviceRunning) {
+                            serviceStatusTitle.textContent = "Serviço Ativo";
+                            serviceStatusSubtitle.textContent = "Os gatilhos estão em execução. Desative para editar.";
+                            triggersContainer.classList.add("triggers-locked");
+                            triggersSubtitle.textContent = "As configurações estão bloqueadas enquanto o serviço está ativo.";
+                        } else {
+                            serviceStatusTitle.textContent = "Serviço Inativo";
+                            serviceStatusSubtitle.textContent = "Configure seus gatilhos e ative para começar.";
+                            triggersContainer.classList.remove("triggers-locked");
+                            triggersSubtitle.textContent = "Defina as ações para os botões de volume.";
+                        }
+
+                        Object.keys(appState.triggers).forEach(triggerKey => {
+                            const trigger = appState.triggers[triggerKey];
+                            document.getElementById(`overview-coords-${triggerKey}`).textContent = `Posição: ${trigger.x !== null ? `${trigger.x}, ${trigger.y}` : "N/A"}`;
+                            const statusDot = document.getElementById(`overview-status-dot-${triggerKey}`);
+                            const statusText = document.getElementById(`overview-status-text-${triggerKey}`);
+                            if (trigger.enabled && appState.serviceRunning) {
+                                statusDot.classList.add("active");
+                                statusText.textContent = "Ativo";
+                            } else {
+                                statusDot.classList.remove("active");
+                                statusText.textContent = "Inativo";
+                            }
+                        });
+
+                        triggerToggles.forEach(toggle => {
+                            const trigger = toggle.dataset.trigger;
+                            toggle.checked = appState.triggers[trigger].enabled;
+                        });
+
+                        coordsEditLinks.forEach(link => {
+                            const triggerKey = link.dataset.trigger;
+                            const { x, y } = appState.triggers[triggerKey];
+                            link.textContent = (x !== null && y !== null) ? `${x}, ${y}` : "N/A (Clique para definir)";
+                        });
+                    }
+                    feather.replace();
+                };
+
+                const simulatePermissionGrant = () => {
+                    Noxss.Toasts.show({
+                        message: "Permissão de acessibilidade concedida!", status: "success", position: "top-center"
+                    });
+                    appState.permissionGranted = true;
+                    saveState();
+                    updateUI();
+                };
+
+                const simulatePositionSet = (triggerKey) => {
+                    const overlay = document.createElement("div");
+                    overlay.className = "tap-capture-overlay";
+                    overlay.innerHTML = `<i data-feather="crosshair" class="noxss-icon"></i><h3>Toque para Definir a Posição</h3><p>Toque em qualquer lugar para capturar as coordenadas.</p>`;
+                    document.body.appendChild(overlay);
+                    feather.replace();
+
+                    overlay.addEventListener("click", () => {
+                        const randX = Math.floor(Math.random() * 1080);
+                        const randY = Math.floor(Math.random() * 1920);
+                        appState.triggers[triggerKey].x = randX;
+                        appState.triggers[triggerKey].y = randY;
+                        appState.triggers[triggerKey].enabled = true;
+                        Noxss.Toasts.show({
+                            message: `Posição definida para ${triggerKey}: (${randX}, ${randY})`, status: "info"
+                        });
+                        saveState();
+                        updateUI();
+                        document.body.removeChild(overlay);
+                    }, { once: true });
+                };
+
+                // --- Lógica do Modal ---
+                coordsEditLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        // A lib Noxss já abre o modal com o data-attribute
+                        const triggerKey = e.currentTarget.dataset.trigger;
+                        const triggerData = appState.triggers[triggerKey];
+
+                        // Preenche o modal com os dados atuais
+                        modalTriggerKeyInput.value = triggerKey;
+                        modalCoordXInput.value = triggerData.x || '';
+                        modalCoordYInput.value = triggerData.y || '';
+                        document.getElementById('modal-title').textContent = `Editar ${triggerKey === 'volumeUp' ? 'Aumentar Volume' : 'Diminuir Volume'}`;
+                    });
+                });
+
+                modalSaveButton.addEventListener('click', () => {
+                    const triggerKey = modalTriggerKeyInput.value;
+                    const newX = parseInt(modalCoordXInput.value, 10);
+                    const newY = parseInt(modalCoordYInput.value, 10);
+
+                    if (triggerKey && !isNaN(newX) && !isNaN(newY)) {
+                        appState.triggers[triggerKey].x = newX;
+                        appState.triggers[triggerKey].y = newY;
+                        appState.triggers[triggerKey].enabled = true; // Ativa o gatilho ao salvar
+                        
+                        saveState();
+                        updateUI();
+                        Noxss.Modals.close(); // Fecha o modal
+                        Noxss.Toasts.show({ message: `Posição para ${triggerKey} salva!`, status: 'success' });
+                    } else {
+                         Noxss.Toasts.show({ message: `Valores de X e Y inválidos.`, status: 'danger' });
+                    }
+                });
+
+
+                // --- Event Listeners ---
+                permissionButton.addEventListener("click", simulatePermissionGrant);
+                mainToggle.addEventListener("change", () => {
+                    appState.serviceRunning = mainToggle.checked;
+                    if (!appState.serviceRunning) {
+                        appState.triggers.volumeUp.enabled = false;
+                        appState.triggers.volumeDown.enabled = false;
+                    }
+                    saveState();
+                    updateUI();
+                });
+                triggerToggles.forEach(toggle => {
+                    toggle.addEventListener("change", () => {
+                        const trigger = toggle.dataset.trigger;
+                        appState.triggers[trigger].enabled = toggle.checked;
+                        saveState();
+                        updateUI();
+                    });
+                });
+                setPositionButtons.forEach(button => {
+                    button.addEventListener("click", () => {
+                        const trigger = button.dataset.trigger;
+                        simulatePositionSet(trigger);
+                    });
+                });
+
+                loadState();
+                updateUI();
+            });
+        </script>
+    </body>
+</html>
