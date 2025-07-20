@@ -6,10 +6,11 @@ workflows:
     name: EchoTap - Android Debug Build
     instance_type: mac_mini_m1 # Usa uma máquina virtual moderna e rápida
     
+    java_version: 11
+    android:
+      build_tools: 33.0.2
+    
     environment:
-      java_version: 11
-      android:
-        build_tools: 33.0.2
       node: 20.11.1
       npm: 10.5.0
       
