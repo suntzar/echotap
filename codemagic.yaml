@@ -1,25 +1,28 @@
 # codemagic.yaml
-# Versão FINAL, DEPURADA E SIMPLIFICADA para construir o APK do EchoTap.
-# Esta configuração utiliza as diretivas nativas do Codemagic para configurar o ambiente,
-# evitando erros de 'command not found'.
+# Versão FINAL E CORRIGIDA do fluxo de trabalho.
+# Resolve o erro de build-tools usando o caminho completo para o sdkmanager,
+# garantindo compatibilidade e validade do arquivo de configuração.
 
 workflows:
   android-debug-build:
     name: EchoTap - Android Debug Build
     instance_type: mac_mini_m1
-    
-    # A maneira CORRETA e DECLARATIVA de configurar o ambiente Android.
-    # Isto garante que o SDK e as ferramentas de build estejam prontos antes dos scripts rodarem.
-    android:
-      # PONTO CHAVE DA CORREÇÃO:
-      # Especifica a versão exata do Build Tools necessária.
-      # Codemagic irá instalar e configurar isso automaticamente.
-      build_tools: 33.0.2
 
     scripts:
+      - name: Instalar Android build-tools v33.0.2
+        script: | 
+          # FATO: $ANDROID_HOME é uma variável de ambiente padrão nos ambientes Codemagic.
+          # SOLUÇÃO: Usamos o caminho completo para o sdkmanager para evitar erros de "command not found".
+          
+          echo "Accepting Android SDK licenses..."
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses >/dev/null
+          
+          echo "Installing Android build-tools v33.0.2..."
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;33.0.2"
+
       - name: Instalar dependências e CLI do Cordova
         script: | 
-          # Boa prática: definir uma versão estável do Node.js
+          # Define a versão do Node.js para consistência
           nvm install 20
           npm install -g cordova
           npm install
