@@ -7,13 +7,9 @@ workflows:
     instance_type: mac_mini_m1 # Usa uma máquina virtual moderna e rápida
     
     environment:
-      # Adiciona o grupo 'android' para configurar o SDK
+      java_version: 11
       android:
-        # PONTO CHAVE DA CORREÇÃO:
-        # Instala a versão exata (33.0.2) do Build Tools que o seu projeto precisa.
         build_tools: 33.0.2
-        
-      # Define as versões das ferramentas para um build consistente
       node: 20.11.1
       npm: 10.5.0
       
