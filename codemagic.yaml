@@ -7,9 +7,6 @@ workflows:
     instance_type: mac_mini_m1 # Usa uma máquina virtual moderna e rápida
     
     environment:
-      # Especifica a versão do Java (JDK 11 é o recomendado para cordova-android@12)
-      java_version: 11
-      
       # Adiciona o grupo 'android' para configurar o SDK
       android:
         # PONTO CHAVE DA CORREÇÃO:
