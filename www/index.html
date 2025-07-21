@@ -1,92 +1,389 @@
 <!doctype html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
-    <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover, user-scalable=no">
-    <title>Diagnóstico EchoTap</title>
-    <style>
-        body { background-color: #121212; color: #e0e0e0; font-family: monospace, sans-serif; padding: 10px; font-size: 14px; }
-        h1 { color: #bb86fc; }
-        #logs { list-style-type: none; padding: 0; margin: 0; }
-        #logs li { padding: 8px; border-bottom: 1px solid #333; word-wrap: break-word; }
-        .log-time { color: #888; margin-right: 10px; }
-        .log-info { color: #03dac6; }
-        .log-success { color: #4caf50; font-weight: bold; }
-        .log-error { color: #cf6679; font-weight: bold; }
-        .log-warn { color: #ffab40; }
-    </style>
-</head>
-<body>
-    <h1>Relatório de Inicialização do EchoTap</h1>
-    <ul id="logs"></ul>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover, user-scalable=no" />
+        <title>EchoTap Core</title>
+        <style>
+            :root {
+                --color-bg: #1e1e1e;
+                --color-text: #e0e0e0;
+                --color-primary: #818cf8;
+                --color-secondary: #777;
+                --color-success: #28a745;
+                --color-danger: #dc3545;
+                --color-surface: #2a2a2a;
+                --color-border: #444;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            html,
+            body {
+                background-color: var(--color-bg);
+                color: var(--color-text);
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                margin: 0;
+                padding: 1rem;
+                font-size: 16px;
+            }
+            h1,
+            h2 {
+                color: var(--color-primary);
+                margin-top: 0;
+                border-bottom: 1px solid var(--color-border);
+                padding-bottom: 0.5rem;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            .control-group {
+                background-color: var(--color-surface);
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 1.5rem;
+                border: 1px solid var(--color-border);
+            }
+            .control-group label {
+                display: block;
+                font-weight: bold;
+                margin-bottom: 0.5rem;
+            }
+            .control-group input[type="number"] {
+                width: 100%;
+                padding: 0.75rem;
+                background-color: var(--color-bg);
+                border: 1px solid var(--color-border);
+                border-radius: 4px;
+                color: var(--color-text);
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
+            button {
+                background-color: var(--color-primary);
+                color: #fff;
+                border: none;
+                padding: 0.75rem 1rem;
+                border-radius: 4px;
+                font-size: 1rem;
+                cursor: pointer;
+                display: block;
+                width: 100%;
+                margin-top: 1rem;
+            }
+            button:disabled {
+                background-color: var(--color-secondary);
+                cursor: not-allowed;
+                opacity: 0.6;
+            }
+            .log-box {
+                background-color: #000;
+                border: 1px solid var(--color-border);
+                border-radius: 4px;
+                padding: 1rem;
+                height: 200px;
+                overflow-y: auto;
+                font-family: monospace;
+                font-size: 0.8rem;
+                white-space: pre-wrap;
+                margin-top: 1rem;
+            }
+            .log-box div {
+                padding-bottom: 0.25rem;
+                margin-bottom: 0.25rem;
+                border-bottom: 1px solid #222;
+            }
+            .log-box .log-error {
+                color: var(--color-danger);
+            }
+            .log-box .log-success {
+                color: var(--color-success);
+            }
+            .log-box .log-info {
+                color: var(--color-secondary);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>EchoTap Core</h1>
 
-    <!-- O Cordova.js DEVE ser o primeiro script relacionado ao Cordova a ser carregado -->
-    <script src="cordova.js"></script>
-    
-    <!-- Scripts da biblioteca, se necessário. Por agora, vamos mantê-los para verificar se carregam -->
-    <script src="noxss/dist/noxss.js"></script>
+            <div class="control-group">
+                <h2>Status do App</h2>
+                <div id="status-cordova">Cordova: <span style="color: var(--color-danger)">Aguardando...</span></div>
+                <div id="status-permission">Permissão de Acessibilidade: <span style="color: var(--color-danger)">Não Verificada</span></div>
+                <div id="status-service">Serviço de Toque: <span style="color: var(--color-danger)">Inativo</span></div>
+            </div>
 
-    <script>
-        // ===================================================================
-        // SCRIPT DE DIAGNÓSTICO
-        // Este script não tem dependências externas e roda imediatamente.
-        // ===================================================================
+            <div class="control-group">
+                <h2>Controles Principais</h2>
+                <button id="btn-permission" disabled>1. Conceder Permissão</button>
+                <button id="btn-service-toggle" disabled>2. Ativar Serviço</button>
+            </div>
 
-        const logList = document.getElementById('logs');
-        let stepCounter = 1;
+            <div class="control-group">
+                <h2>Configuração de Gatilhos</h2>
 
-        // Função de log visual para sabermos o que está acontecendo
-        function log(message, type = 'info') {
-            const li = document.createElement('li');
-            const time = new Date().toLocaleTimeString();
-            
-            li.innerHTML = `<span class="log-time">${time}</span><span class="log-${type}">[Passo ${stepCounter++}] ${message}</span>`;
-            logList.appendChild(li);
-            console.log(`DIAGNOSTICO: ${message}`);
-        }
-        
-        log("Iniciando script de diagnóstico.");
+                <label for="input-up-x">Volume + (Coordenada X)</label>
+                <input type="number" id="input-up-x" placeholder="Ex: 850" min="0" />
+                <label for="input-up-y">Volume + (Coordenada Y)</label>
+                <input type="number" id="input-up-y" placeholder="Ex: 400" min="0" />
 
-        // --- Verificação de Ambiente ---
-        log(`User Agent: ${navigator.userAgent}`);
-        const isCordovaApp = typeof window.cordova !== 'undefined';
-        log(`Verificando 'window.cordova'... Resultado: ${isCordovaApp}`, isCordovaApp ? 'success' : 'warn');
+                <label for="input-down-x" style="margin-top: 1rem">Volume - (Coordenada X)</label>
+                <input type="number" id="input-down-x" placeholder="Ex: 150" min="0" />
+                <label for="input-down-y">Volume - (Coordenada Y)</label>
+                <input type="number" id="input-down-y" placeholder="Ex: 400" min="0" />
 
-        // --- Verificação de Bibliotecas ---
-        const isNoxssLoaded = typeof Noxss !== 'undefined';
-        log(`Verificando 'Noxss' global... Resultado: ${isNoxssLoaded}`, isNoxssLoaded ? 'success' : 'warn');
-        if (!isNoxssLoaded) {
-            log("AVISO: A biblioteca Noxss não foi carregada. Verifique o caminho 'noxss/dist/noxss.js'.", "warn");
-        }
-        
-        // --- Lógica de Inicialização do Cordova ---
-        function onDeviceReady() {
-            log("EVENTO 'deviceready' DISPARADO!", 'success');
-            log(`Plataforma Cordova: ${window.device.platform} ${window.device.version}`);
-            
-            // Aqui é onde a lógica principal do seu app começaria
-            log("Aplicativo pronto para interagir com plugins nativos.", "success");
-            document.body.style.backgroundColor = '#003300'; // Feedback visual de sucesso
-        }
+                <button id="btn-save" disabled>Salvar Configurações</button>
+            </div>
 
-        function onDeviceReadyTimeout() {
-            log("TIMEOUT! O evento 'deviceready' não foi disparado após 10 segundos.", 'error');
-            log("Possíveis causas: 1) Erro no arquivo 'cordova.js' (verifique o console de erros nativo). 2) Um plugin está falhando ao inicializar. 3) Problema na Content-Security-Policy (CSP).", 'error');
-            document.body.style.backgroundColor = '#330000'; // Feedback visual de erro
-        }
+            <div class="control-group">
+                <h2>Logs de Depuração</h2>
+                <div id="log-box" class="log-box"></div>
+            </div>
+        </div>
 
-        if (isCordovaApp) {
-            log("Ambiente Cordova detectado. Aguardando 'deviceready'...");
-            document.addEventListener('deviceready', onDeviceReady, false);
-            // Adiciona um timeout para nos avisar se o evento nunca chegar
-            setTimeout(onDeviceReadyTimeout, 10000); 
-        } else {
-            log("Ambiente de navegador detectado. O 'deviceready' não será disparado. A funcionalidade nativa não estará disponível.", 'warn');
-            // No modo de diagnóstico, não disparamos o evento manualmente para não criar falsos positivos.
-            // O objetivo é ver se ele dispara *naturalmente* no dispositivo.
-        }
+        <script src="cordova.js"></script>
+        <script>
+            const App = {
+                state: {
+                    cordovaReady: false,
+                    permissionGranted: false,
+                    serviceRunning: false,
+                    triggers: {
+                        volumeUp: { x: null, y: null },
+                        volumeDown: { x: null, y: null }
+                    }
+                },
 
-    </script>
-</body>
+                plugin: null,
+
+                elements: {},
+
+                EchoTapPluginMock: {
+                    checkPermission: callback => {
+                        App.log("MOCK: Verificando permissão...", "info");
+                        setTimeout(() => callback(App.state.permissionGranted), 500);
+                    },
+                    requestPermission: (success, error) => {
+                        App.log("MOCK: Solicitando permissão...", "info");
+                        setTimeout(() => {
+                            App.state.permissionGranted = true;
+                            success("Permissão concedida (Simulação)");
+                        }, 1500);
+                    },
+                    startService: (config, success, error) => {
+                        if (!config.volumeUp.x || !config.volumeUp.y || !config.volumeDown.x || !config.volumeDown.y) {
+                            error("Coordenadas não configuradas para ambos os gatilhos.");
+                            return;
+                        }
+                        App.log("MOCK: Iniciando serviço com config: " + JSON.stringify(config), "info");
+                        setTimeout(() => success("Serviço iniciado (Simulação)"), 500);
+                    },
+                    stopService: (success, error) => {
+                        App.log("MOCK: Parando serviço...", "info");
+                        setTimeout(() => success("Serviço parado (Simulação)"), 500);
+                    }
+                },
+
+                initialize() {
+                    this.cacheElements();
+                    this.log("App inicializado. Aguardando 'deviceready'...", "info");
+
+                    document.addEventListener("deviceready", this.onDeviceReady.bind(this), false);
+
+                    setTimeout(() => {
+                        if (!this.state.cordovaReady) {
+                            this.log("'deviceready' não disparou após 5 segundos. Forçando inicialização com MOCK.", "error");
+                            this.onDeviceReady();
+                        }
+                    }, 5000);
+                },
+
+                onDeviceReady() {
+                    if (this.state.cordovaReady) return;
+
+                    this.state.cordovaReady = true;
+                    this.log("Evento 'deviceready' recebido!", "success");
+
+                    this.plugin = window.EchoTapPlugin || this.EchoTapPluginMock;
+
+                    if (!window.EchoTapPlugin) {
+                        this.log("AVISO: Plugin nativo 'EchoTapPlugin' não encontrado. Usando MOCK.", "error");
+                    }
+
+                    this.bindEvents();
+                    this.loadState();
+
+                    this.plugin.checkPermission(isGranted => {
+                        this.log(`Permissão verificada: ${isGranted}`, "info");
+                        this.state.permissionGranted = isGranted;
+                        this.updateUI();
+                    });
+                },
+
+                cacheElements() {
+                    this.elements = {
+                        status: {
+                            cordova: document.querySelector("#status-cordova span"),
+                            permission: document.querySelector("#status-permission span"),
+                            service: document.querySelector("#status-service span")
+                        },
+                        buttons: {
+                            permission: document.getElementById("btn-permission"),
+                            serviceToggle: document.getElementById("btn-service-toggle"),
+                            save: document.getElementById("btn-save")
+                        },
+                        inputs: {
+                            upX: document.getElementById("input-up-x"),
+                            upY: document.getElementById("input-up-y"),
+                            downX: document.getElementById("input-down-x"),
+                            downY: document.getElementById("input-down-y")
+                        },
+                        logBox: document.getElementById("log-box")
+                    };
+                },
+
+                bindEvents() {
+                    this.elements.buttons.permission.addEventListener("click", this.requestPermission.bind(this));
+                    this.elements.buttons.serviceToggle.addEventListener("click", this.toggleService.bind(this));
+                    this.elements.buttons.save.addEventListener("click", this.saveTriggers.bind(this));
+                },
+
+                loadState() {
+                    try {
+                        const savedStateJSON = localStorage.getItem("echoTapState");
+                        if (!savedStateJSON) {
+                            this.log("Nenhuma configuração salva encontrada.", "info");
+                            return;
+                        }
+
+                        const savedState = JSON.parse(savedStateJSON);
+
+                        if (savedState && typeof savedState.triggers === "object") {
+                            this.state.triggers = { ...this.state.triggers, ...savedState.triggers };
+                            this.log("Configurações salvas carregadas.", "info");
+                        }
+                    } catch (e) {
+                        this.log(`Erro ao carregar configurações: ${e.message}`, "error");
+                    }
+                },
+
+                saveState() {
+                    localStorage.setItem("echoTapState", JSON.stringify({ triggers: this.state.triggers }));
+                    this.log("Configurações salvas.", "success");
+                },
+
+                updateUI() {
+                    const { cordovaReady, permissionGranted, serviceRunning, triggers } = this.state;
+                    const { status, buttons, inputs } = this.elements;
+
+                    status.cordova.textContent = cordovaReady ? "Pronto" : "Aguardando...";
+                    status.cordova.style.color = cordovaReady ? "var(--color-success)" : "var(--color-danger)";
+
+                    status.permission.textContent = permissionGranted ? "Concedida" : "Necessária";
+                    status.permission.style.color = permissionGranted ? "var(--color-success)" : "var(--color-danger)";
+
+                    status.service.textContent = serviceRunning ? "Ativo" : "Inativo";
+                    status.service.style.color = serviceRunning ? "var(--color-success)" : "var(--color-danger)";
+
+                    buttons.permission.disabled = !cordovaReady || permissionGranted;
+                    buttons.serviceToggle.disabled = !permissionGranted;
+                    buttons.serviceToggle.textContent = serviceRunning ? "Parar Serviço" : "Parar Serviço";
+                    buttons.save.disabled = !cordovaReady || serviceRunning;
+
+                    inputs.upX.value = triggers.volumeUp.x || "";
+                    inputs.upY.value = triggers.volumeUp.y || "";
+                    inputs.downX.value = triggers.volumeDown.x || "";
+                    inputs.downY.value = triggers.volumeDown.y || "";
+
+                    const isEditable = cordovaReady && !serviceRunning;
+                    inputs.upX.disabled = !isEditable;
+                    inputs.upY.disabled = !isEditable;
+                    inputs.downX.disabled = !isEditable;
+                    inputs.downY.disabled = !isEditable;
+                },
+
+                requestPermission() {
+                    this.elements.buttons.permission.disabled = true;
+                    this.plugin.requestPermission(
+                        msg => {
+                            this.log(msg, "success");
+                            this.state.permissionGranted = true;
+                            this.updateUI();
+                        },
+                        err => {
+                            this.log(`Erro ao pedir permissão: ${err}`, "error");
+                            this.updateUI();
+                        }
+                    );
+                },
+
+                toggleService() {
+                    if (this.state.serviceRunning) {
+                        this.plugin.stopService(
+                            msg => {
+                                this.log(msg, "success");
+                                this.state.serviceRunning = false;
+                                this.updateUI();
+                            },
+                            err => {
+                                this.log(`Erro ao parar o serviço: ${err}`, "error");
+                            }
+                        );
+                    } else {
+                        if (!this.state.triggers.volumeUp.x || !this.state.triggers.volumeDown.x) {
+                            this.log("Configure e salve as coordenadas para ambos os botões antes de iniciar.", "error");
+                            return;
+                        }
+                        this.plugin.startService(
+                            this.state.triggers,
+                            msg => {
+                                this.log(msg, "success");
+                                this.state.serviceRunning = true;
+                                this.updateUI();
+                            },
+                            err => {
+                                this.log(`Erro ao iniciar o serviço: ${err}`, "error");
+                            }
+                        );
+                    }
+                },
+
+                saveTriggers() {
+                    const { inputs } = this.elements;
+                    const upX = parseInt(inputs.upX.value, 10);
+                    const upY = parseInt(inputs.upY.value, 10);
+                    const downX = parseInt(inputs.downX.value, 10);
+                    const downY = parseInt(inputs.downY.value, 10);
+
+                    if (isNaN(upX) || upX < 0 || isNaN(upY) || upY < 0 || isNaN(downX) || downX < 0 || isNaN(downY) || downY < 0) {
+                        this.log("Preencha todas as coordenadas com números positivos.", "error");
+                        return;
+                    }
+
+                    this.state.triggers.volumeUp = { x: upX, y: upY };
+                    this.state.triggers.volumeDown = { x: downX, y: downY };
+
+                    this.saveState();
+                    this.updateUI();
+                },
+
+                log(message, type = "log") {
+                    const logEntry = document.createElement("div");
+                    const timestamp = new Date().toLocaleTimeString();
+                    logEntry.textContent = `[${timestamp}] ${message}`;
+                    logEntry.className = `log-${type}`;
+                    this.elements.logBox.appendChild(logEntry);
+                    this.elements.logBox.scrollTop = this.elements.logBox.scrollHeight;
+                }
+            };
+
+            App.initialize();
+        </script>
+    </body>
 </html>
