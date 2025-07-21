@@ -1,347 +1,276 @@
 <!doctype html>
 <html lang="pt-br">
-    <head>
-        <meta charset="UTF-8" />
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;" />
-        <meta name="format-detection" content="telephone=no" />
-        <meta name="msapplication-tap-highlight" content="no" />
-        <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover, user-scalable=no" />
-        <title>EchoTap Core</title>
-        <style>
-            :root {
-                --color-bg: #1e1e1e;
-                --color-text: #e0e0e0;
-                --color-primary: #818cf8;
-                --color-secondary: #777;
-                --color-success: #28a745;
-                --color-danger: #dc3545;
-                --color-surface: #2a2a2a;
-                --color-border: #444;
-            }
-            * {
-                box-sizing: border-box;
-            }
-            html,
-            body {
-                background-color: var(--color-bg);
-                color: var(--color-text);
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                margin: 0;
-                padding: 1rem;
-                font-size: 16px;
-            }
-            h1,
-            h2 {
-                color: var(--color-primary);
-                margin-top: 0;
-                border-bottom: 1px solid var(--color-border);
-                padding-bottom: 0.5rem;
-            }
-            .container {
-                max-width: 600px;
-                margin: 0 auto;
-            }
-            .control-group {
-                background-color: var(--color-surface);
-                padding: 1rem;
-                border-radius: 8px;
-                margin-bottom: 1.5rem;
-                border: 1px solid var(--color-border);
-            }
-            .control-group label {
-                display: block;
-                font-weight: bold;
-                margin-bottom: 0.5rem;
-            }
-            .control-group input[type="number"] {
-                width: 100%;
-                padding: 0.75rem;
-                background-color: var(--color-bg);
-                border: 1px solid var(--color-border);
-                border-radius: 4px;
-                color: var(--color-text);
-                font-size: 1rem;
-                margin-bottom: 0.5rem;
-            }
-            button {
-                background-color: var(--color-primary);
-                color: #fff;
-                border: none;
-                padding: 0.75rem 1rem;
-                border-radius: 4px;
-                font-size: 1rem;
-                cursor: pointer;
-                display: block;
-                width: 100%;
-                margin-top: 1rem;
-            }
-            button:disabled {
-                background-color: var(--color-secondary);
-                cursor: not-allowed;
-            }
-            .log-box {
-                background-color: #000;
-                border: 1px solid var(--color-border);
-                border-radius: 4px;
-                padding: 1rem;
-                height: 200px;
-                overflow-y: auto;
-                font-family: monospace;
-                font-size: 0.8rem;
-                white-space: pre-wrap;
-                margin-top: 1rem;
-            }
-            .log-box div {
-                padding-bottom: 0.25rem;
-                border-bottom: 1px solid #222;
-            }
-            .log-box .log-error {
-                color: var(--color-danger);
-            }
-            .log-box .log-success {
-                color: var(--color-success);
-            }
-            .log-box .log-info {
-                color: var(--color-secondary);
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>EchoTap Core</h1>
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover, user-scalable=no">
+    <title>EchoTap Core</title>
+    <style>
+        :root {
+            --color-bg: #1e1e1e; --color-text: #e0e0e0; --color-primary: #818cf8;
+            --color-secondary: #777; --color-success: #28a745; --color-danger: #dc3545;
+            --color-surface: #2a2a2a; --color-border: #444;
+        }
+        * { box-sizing: border-box; }
+        html, body { background-color: var(--color-bg); color: var(--color-text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 1rem; font-size: 16px; }
+        h1, h2 { color: var(--color-primary); margin-top: 0; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .control-group { background-color: var(--color-surface); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--color-border); }
+        .control-group label { display: block; font-weight: bold; margin-bottom: 0.5rem; }
+        .control-group input[type="number"] { width: 100%; padding: 0.75rem; background-color: var(--color-bg); border: 1px solid var(--color-border); border-radius: 4px; color: var(--color-text); font-size: 1rem; margin-bottom: 0.5rem; }
+        button { background-color: var(--color-primary); color: #fff; border: none; padding: 0.75rem 1rem; border-radius: 4px; font-size: 1rem; cursor: pointer; display: block; width: 100%; margin-top: 1rem; }
+        button:disabled { background-color: var(--color-secondary); cursor: not-allowed; }
+        .log-box { background-color: #000; border: 1px solid var(--color-border); border-radius: 4px; padding: 1rem; height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.8rem; white-space: pre-wrap; margin-top: 1rem; }
+        .log-box div { padding-bottom: 0.25rem; border-bottom: 1px solid #222; }
+        .log-box .log-error { color: var(--color-danger); }
+        .log-box .log-success { color: var(--color-success); }
+        .log-box .log-info { color: var(--color-secondary); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>EchoTap Core</h1>
 
-            <div class="control-group">
-                <h2>Status do App</h2>
-                <div id="status-cordova">Cordova: <span style="color: var(--color-danger)">Aguardando...</span></div>
-                <div id="status-permission">Permissão de Acessibilidade: <span style="color: var(--color-danger)">Não Verificada</span></div>
-                <div id="status-service">Serviço de Toque: <span style="color: var(--color-danger)">Inativo</span></div>
-            </div>
-
-            <div class="control-group">
-                <h2>Controles Principais</h2>
-                <button id="btn-permission" disabled>1. Conceder Permissão</button>
-                <button id="btn-service-toggle" disabled>2. Ativar Serviço</button>
-            </div>
-
-            <div class="control-group">
-                <h2>Configuração de Gatilhos</h2>
-
-                <label for="input-up-x">Volume + (Coordenada X)</label>
-                <input type="number" id="input-up-x" placeholder="Ex: 850" min="0" />
-                <label for="input-up-y">Volume + (Coordenada Y)</label>
-                <input type="number" id="input-up-y" placeholder="Ex: 400" min="0" />
-
-                <label for="input-down-x" style="margin-top: 1rem">Volume - (Coordenada X)</label>
-                <input type="number" id="input-down-x" placeholder="Ex: 150" min="0" />
-                <label for="input-down-y">Volume - (Coordenada Y)</label>
-                <input type="number" id="input-down-y" placeholder="Ex: 400" min="0" />
-
-                <button id="btn-save" disabled>Salvar Configurações</button>
-            </div>
-
-            <div class="control-group">
-                <h2>Logs de Depuração</h2>
-                <div id="log-box" class="log-box"></div>
-            </div>
+        <div class="control-group">
+            <h2>Status do App</h2>
+            <div id="status-cordova">Cordova: <span style="color: var(--color-danger);">Aguardando...</span></div>
+            <div id="status-permission">Permissão de Acessibilidade: <span style="color: var(--color-danger);">Não Verificada</span></div>
+            <div id="status-service">Serviço de Toque: <span style="color: var(--color-danger);">Inativo</span></div>
         </div>
 
-        <script src="cordova.js"></script>
-        <script>
-            const App = {
-                state: {
-                    cordovaReady: false,
-                    permissionGranted: false,
-                    serviceRunning: false,
-                    triggers: {
-                        volumeUp: { x: null, y: null },
-                        volumeDown: { x: null, y: null }
-                    }
+        <div class="control-group">
+            <h2>Controles Principais</h2>
+            <button id="btn-permission" disabled>1. Conceder Permissão</button>
+            <button id="btn-service-toggle" disabled>2. Ativar Serviço</button>
+        </div>
+        
+        <div class="control-group">
+            <h2>Configuração de Gatilhos</h2>
+            
+            <label for="input-up-x">Volume + (Coordenada X)</label>
+            <input type="number" id="input-up-x" placeholder="Ex: 850" min="0">
+            <label for="input-up-y">Volume + (Coordenada Y)</label>
+            <input type="number" id="input-up-y" placeholder="Ex: 400" min="0">
+            
+            <label for="input-down-x" style="margin-top: 1rem;">Volume - (Coordenada X)</label>
+            <input type="number" id="input-down-x" placeholder="Ex: 150" min="0">
+            <label for="input-down-y">Volume - (Coordenada Y)</label>
+            <input type="number" id="input-down-y" placeholder="Ex: 400" min="0">
+
+            <button id="btn-save" disabled>Salvar Configurações</button>
+        </div>
+
+        <div class="control-group">
+            <h2>Logs de Depuração</h2>
+            <div id="log-box" class="log-box"></div>
+        </div>
+    </div>
+
+    <script src="cordova.js"></script>
+    <script>
+        const App = {
+            state: {
+                cordovaReady: false,
+                permissionGranted: false,
+                serviceRunning: false,
+                triggers: {
+                    volumeUp: { x: null, y: null },
+                    volumeDown: { x: null, y: null },
+                }
+            },
+            plugin: null,
+            elements: {},
+
+            EchoTapPluginMock: {
+                checkPermission: (callback) => { 
+                    App.log("MOCK: Verificando permissão...", "info");
+                    setTimeout(() => callback(App.state.permissionGranted), 500);
                 },
-
-                plugin: null,
-
-                elements: {},
-
-                EchoTapPluginMock: {
-                    checkPermission: callback => {
-                        App.log("MOCK: Verificando permissão...", "info");
-                        setTimeout(() => callback(App.state.permissionGranted), 500);
-                    },
-                    requestPermission: (success, error) => {
-                        App.log("MOCK: Solicitando permissão...", "info");
-                        setTimeout(() => {
-                            App.state.permissionGranted = true;
-                            success("Permissão concedida (Simulação)");
-                        }, 1500);
-                    },
-                    startService: (config, success, error) => {
-                        if (!App.state.triggers.volumeUp.x || !App.state.triggers.volumeDown.x) {
-                            error("Coordenadas não configuradas.");
-                            return;
-                        }
-                        App.log("MOCK: Iniciando serviço com config: " + JSON.stringify(config), "info");
-                        setTimeout(() => success("Serviço iniciado (Simulação)"), 500);
-                    },
-                    stopService: (success, error) => {
-                        App.log("MOCK: Parando serviço...", "info");
-                        setTimeout(() => success("Serviço parado (Simulação)"), 500);
-                    }
+                requestPermission: (success, error) => {
+                    App.log("MOCK: Solicitando permissão...", "info");
+                    setTimeout(() => {
+                        App.state.permissionGranted = true;
+                        success("Permissão concedida (Simulação)");
+                    }, 1500);
                 },
-
-                initialize() {
-                    this.cacheElements();
-                    this.log("App inicializado. Aguardando 'deviceready'...", "info");
-                    document.addEventListener("deviceready", this.onDeviceReady.bind(this), false);
-                },
-
-                onDeviceReady() {
-                    this.state.cordovaReady = true;
-                    this.log("Evento 'deviceready' recebido!", "success");
-
-                    this.plugin = window.EchoTapPlugin || this.EchoTapPluginMock;
-
-                    this.bindEvents();
-                    this.loadState();
-
-                    this.plugin.checkPermission(isGranted => {
-                        this.log(`Permissão verificada: ${isGranted}`, "info");
-                        this.state.permissionGranted = isGranted;
-                        this.updateUI();
-                    });
-                },
-
-                cacheElements() {
-                    this.elements = {
-                        status: {
-                            cordova: document.querySelector("#status-cordova span"),
-                            permission: document.querySelector("#status-permission span"),
-                            service: document.querySelector("#status-service span")
-                        },
-                        buttons: {
-                            permission: document.getElementById("btn-permission"),
-                            serviceToggle: document.getElementById("btn-service-toggle"),
-                            save: document.getElementById("btn-save")
-                        },
-                        inputs: {
-                            upX: document.getElementById("input-up-x"),
-                            upY: document.getElementById("input-up-y"),
-                            downX: document.getElementById("input-down-x"),
-                            downY: document.getElementById("input-down-y")
-                        },
-                        logBox: document.getElementById("log-box")
-                    };
-                },
-
-                bindEvents() {
-                    this.elements.buttons.permission.addEventListener("click", this.requestPermission.bind(this));
-                    this.elements.buttons.serviceToggle.addEventListener("click", this.toggleService.bind(this));
-                    this.elements.buttons.save.addEventListener("click", this.saveTriggers.bind(this));
-                },
-
-                loadState() {
-                    try {
-                        const savedState = JSON.parse(localStorage.getItem("echoTapState"));
-                        if (savedState && savedState.triggers) {
-                            this.state.triggers = savedState.triggers;
-                            this.log("Configurações salvas carregadas.", "info");
-                        }
-                    } catch (e) {
-                        this.log("Nenhuma configuração salva encontrada.", "info");
-                    }
-                },
-
-                saveState() {
-                    localStorage.setItem("echoTapState", JSON.stringify({ triggers: this.state.triggers }));
-                    this.log("Configurações salvas.", "success");
-                },
-
-                updateUI() {
-                    const { cordovaReady, permissionGranted, serviceRunning, triggers } = this.state;
-                    const { status, buttons, inputs } = this.elements;
-
-                    status.cordova.textContent = cordovaReady ? "Pronto" : "Aguardando...";
-                    status.cordova.style.color = cordovaReady ? "var(--color-success)" : "var(--color-danger)";
-
-                    status.permission.textContent = permissionGranted ? "Concedida" : "Necessária";
-                    status.permission.style.color = permissionGranted ? "var(--color-success)" : "var(--color-danger)";
-
-                    status.service.textContent = serviceRunning ? "Ativo" : "Inativo";
-                    status.service.style.color = serviceRunning ? "var(--color-success)" : "var(--color-danger)";
-
-                    buttons.permission.disabled = !cordovaReady || permissionGranted;
-                    buttons.serviceToggle.disabled = !permissionGranted;
-                    buttons.serviceToggle.textContent = serviceRunning ? "Parar Serviço" : "Iniciar Serviço";
-                    buttons.save.disabled = !cordovaReady || serviceRunning;
-
-                    inputs.upX.value = triggers.volumeUp.x || "";
-                    inputs.upY.value = triggers.volumeUp.y || "";
-                    inputs.downX.value = triggers.volumeDown.x || "";
-                    inputs.downY.value = triggers.volumeDown.y || "";
-
-                    inputs.upX.disabled = serviceRunning;
-                    inputs.upY.disabled = serviceRunning;
-                    inputs.downX.disabled = serviceRunning;
-                    inputs.downY.disabled = serviceRunning;
-                },
-
-                requestPermission() {
-                    this.plugin.requestPermission(
-                        msg => {
-                            this.log(msg, "success");
-                            this.state.permissionGranted = true;
-                            this.updateUI();
-                        },
-                        err => {
-                            this.log(`Erro ao pedir permissão: ${err}`, "error");
-                        }
-                    );
-                },
-
-                toggleService() {
-                    const action = this.state.serviceRunning ? "stopService" : "startService";
-                    this.plugin[action](
-                        this.state.triggers,
-                        msg => {
-                            this.log(msg, "success");
-                            this.state.serviceRunning = !this.state.serviceRunning;
-                            this.updateUI();
-                        },
-                        err => {
-                            this.log(`Erro: ${err}`, "error");
-                        }
-                    );
-                },
-
-                saveTriggers() {
-                    const { inputs } = this.elements;
-                    const upX = parseInt(inputs.upX.value, 10);
-                    const upY = parseInt(inputs.upY.value, 10);
-                    const downX = parseInt(inputs.downX.value, 10);
-                    const downY = parseInt(inputs.downY.value, 10);
-
-                    if (isNaN(upX) || isNaN(upY) || isNaN(downX) || isNaN(downY)) {
-                        this.log("Preencha todas as coordenadas com números válidos.", "error");
+                startService: (config, success, error) => {
+                    if (!App.state.triggers.volumeUp.x || !App.state.triggers.volumeUp.y || !App.state.triggers.volumeDown.x || !App.state.triggers.volumeDown.y) {
+                        error("Coordenadas não configuradas.");
                         return;
                     }
-
-                    this.state.triggers.volumeUp = { x: upX, y: upY };
-                    this.state.triggers.volumeDown = { x: downX, y: downY };
-
-                    this.saveState();
-                    this.updateUI();
+                    App.log("MOCK: Iniciando serviço com config: " + JSON.stringify(config), "info");
+                    setTimeout(() => success("Serviço iniciado (Simulação)"), 500);
                 },
-
-                log(message, type = "log") {
-                    const logEntry = document.createElement("div");
-                    const timestamp = new Date().toLocaleTimeString();
-                    logEntry.textContent = `[${timestamp}] ${message}`;
-                    logEntry.className = `log-${type}`;
-                    this.elements.logBox.appendChild(logEntry);
-                    this.elements.logBox.scrollTop = this.elements.logBox.scrollHeight;
+                stopService: (success, error) => {
+                    App.log("MOCK: Parando serviço...", "info");
+                    setTimeout(() => success("Serviço parado (Simulação)"), 500);
                 }
-            };
+            },
 
-            App.initialize();
-        </script>
-    </body>
+            initialize() {
+                this.cacheElements();
+                this.log("App inicializado. Aguardando 'deviceready'...", "info");
+
+                // CORREÇÃO: Dispara o 'deviceready' manualmente se não estiver em um dispositivo.
+                // Isso permite testar no navegador.
+                const isCordovaApp = typeof window.cordova !== 'undefined';
+                if (isCordovaApp) {
+                    document.addEventListener('deviceready', this.onDeviceReady.bind(this), false);
+                } else {
+                    this.log("Ambiente de navegador detectado. Disparando 'deviceready' manualmente.", "info");
+                    this.onDeviceReady(); // Chama diretamente
+                }
+            },
+
+            onDeviceReady() {
+                this.state.cordovaReady = true;
+                this.log("Evento 'deviceready' recebido!", "success");
+                
+                this.plugin = window.EchoTapPlugin || this.EchoTapPluginMock;
+                
+                this.bindEvents();
+                this.loadState();
+                
+                this.plugin.checkPermission(isGranted => {
+                    this.log(`Permissão verificada: ${isGranted}`, "info");
+                    this.state.permissionGranted = isGranted;
+                    this.updateUI();
+                });
+            },
+
+            cacheElements() {
+                this.elements = {
+                    status: {
+                        cordova: document.querySelector('#status-cordova span'),
+                        permission: document.querySelector('#status-permission span'),
+                        service: document.querySelector('#status-service span'),
+                    },
+                    buttons: {
+                        permission: document.getElementById('btn-permission'),
+                        serviceToggle: document.getElementById('btn-service-toggle'),
+                        save: document.getElementById('btn-save'),
+                    },
+                    inputs: {
+                        upX: document.getElementById('input-up-x'),
+                        upY: document.getElementById('input-up-y'),
+                        downX: document.getElementById('input-down-x'),
+                        downY: document.getElementById('input-down-y'),
+                    },
+                    logBox: document.getElementById('log-box'),
+                };
+            },
+
+            bindEvents() {
+                this.elements.buttons.permission.addEventListener('click', this.requestPermission.bind(this));
+                this.elements.buttons.serviceToggle.addEventListener('click', this.toggleService.bind(this));
+                this.elements.buttons.save.addEventListener('click', this.saveTriggers.bind(this));
+            },
+
+            loadState() {
+                try {
+                    const savedState = JSON.parse(localStorage.getItem("echoTapState"));
+                    if (savedState && savedState.triggers) {
+                        this.state.triggers = savedState.triggers;
+                        this.log("Configurações salvas carregadas.", "info");
+                    }
+                } catch (e) {
+                    this.log("Nenhuma configuração salva encontrada.", "info");
+                }
+            },
+
+            saveState() {
+                localStorage.setItem("echoTapState", JSON.stringify({ triggers: this.state.triggers }));
+                this.log("Configurações salvas.", "success");
+            },
+
+            updateUI() {
+                const { cordovaReady, permissionGranted, serviceRunning, triggers } = this.state;
+                const { status, buttons, inputs } = this.elements;
+
+                status.cordova.textContent = cordovaReady ? "Pronto" : "Aguardando...";
+                status.cordova.style.color = cordovaReady ? 'var(--color-success)' : 'var(--color-danger)';
+                
+                status.permission.textContent = permissionGranted ? "Concedida" : "Necessária";
+                status.permission.style.color = permissionGranted ? 'var(--color-success)' : 'var(--color-danger)';
+                
+                status.service.textContent = serviceRunning ? "Ativo" : "Inativo";
+                status.service.style.color = serviceRunning ? 'var(--color-success)' : 'var(--color-danger)';
+                
+                buttons.permission.disabled = !cordovaReady || permissionGranted;
+                buttons.serviceToggle.disabled = !permissionGranted;
+                buttons.serviceToggle.textContent = serviceRunning ? "Parar Serviço" : "Iniciar Serviço";
+                buttons.save.disabled = !cordovaReady || serviceRunning;
+
+                inputs.upX.value = triggers.volumeUp.x || '';
+                inputs.upY.value = triggers.volumeUp.y || '';
+                inputs.downX.value = triggers.volumeDown.x || '';
+                inputs.downY.value = triggers.volumeDown.y || '';
+
+                inputs.upX.disabled = serviceRunning;
+                inputs.upY.disabled = serviceRunning;
+                inputs.downX.disabled = serviceRunning;
+                inputs.downY.disabled = serviceRunning;
+            },
+
+            requestPermission() {
+                this.plugin.requestPermission(
+                    (msg) => {
+                        this.log(msg, "success");
+                        this.state.permissionGranted = true;
+                        this.updateUI();
+                    },
+                    (err) => {
+                        this.log(`Erro ao pedir permissão: ${err}`, "error");
+                    }
+                );
+            },
+
+            toggleService() {
+                const action = this.state.serviceRunning ? 'stopService' : 'startService';
+                this.plugin[action](this.state.triggers,
+                    (msg) => {
+                        this.log(msg, "success");
+                        this.state.serviceRunning = !this.state.serviceRunning;
+                        this.updateUI();
+                    },
+                    (err) => {
+                        this.log(`Erro: ${err}`, "error");
+                    }
+                );
+            },
+
+            saveTriggers() {
+                const { inputs } = this.elements;
+                const upX = parseInt(inputs.upX.value, 10);
+                const upY = parseInt(inputs.upY.value, 10);
+                const downX = parseInt(inputs.downX.value, 10);
+                const downY = parseInt(inputs.downY.value, 10);
+
+                if (isNaN(upX) || isNaN(upY) || isNaN(downX) || isNaN(downY)) {
+                    this.log("Preencha todas as coordenadas com números válidos.", "error");
+                    return;
+                }
+                
+                this.state.triggers.volumeUp = { x: upX, y: upY };
+                this.state.triggers.volumeDown = { x: downX, y: downY };
+                
+                this.saveState();
+                this.updateUI();
+            },
+
+            log(message, type = 'log') {
+                const logEntry = document.createElement('div');
+                const timestamp = new Date().toLocaleTimeString();
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                logEntry.className = `log-${type}`;
+                this.elements.logBox.appendChild(logEntry);
+                this.elements.logBox.scrollTop = this.elements.logBox.scrollHeight;
+            }
+        };
+
+        App.initialize();
+    </script>
+</body>
 </html>
